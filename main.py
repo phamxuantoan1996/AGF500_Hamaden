@@ -1,11 +1,9 @@
 from threading import Thread
 from agf_init import agf_init_func,mb_client,Robot,work_status,AGF_Param_Config,task_chain
-from logfile import LogFile
 import time
-from agf_work_status import AGF_Work_Status,Lift_Dir,Pallet_State,AGF_Work_Mode,Slider_Dir
+from agf_work_status import Mission_Status,AGF_Status
 from agf_task_chain import AGF_Task_Status
 from route import app
-import json
 
 def lift_set_mode(mode:str):
     '''
@@ -59,9 +57,7 @@ def task_agf_poll_status_func():
             work_status.task_list = task_chain.task_list
             work_status.task_current = task_chain.task_current
             list_error = []
-
             # notices = "AGF đang hoạt động."
-
             if Robot.data_Status["emergency"]:
                 list_error.append("emergency")
                 # notices = "AGF dừng khẩn cấp."
@@ -72,13 +68,11 @@ def task_agf_poll_status_func():
                 list_error.append("modbus")
                 # notices = "AGF lỗi truyền thông modbus."
             work_status.agf_error = list_error
-
             if work_status.task_current != {}:
                 if work_status.task_current['task_name'] == 'pick':
                     Robot.play_audio({"name":"picking_pallet","loop":False})
                 elif work_status.task_current['task_name'] == 'put':
                     Robot.play_audio({"name":"puting_pallet","loop":False})
-
             if Robot.data_Status['emergency']:
                 lift_set_led(9) #Blink red
                 Robot.play_audio({"name":"error","loop":False})
@@ -90,7 +84,7 @@ def task_agf_poll_status_func():
                 lift_set_led(11)
             else:
                 if work_status.task_current != {}:
-                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (mb_client.input_regs[7] != 0):
+                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (mb_client.input_regs[7] != 0) and (mb_client.hold_regs[0] != 0):
                         lift_set_led(8)
                         # notices = "Có vật cản trong vùng AGF lấy/trả pallet."
                     else:
@@ -106,35 +100,38 @@ def task_agf_poll_status_func():
 def task_chain_run_func():
     while True:
         if len(task_chain.task_list) > 0:
+            work_status.mission_status = Mission_Status.Mission_Status_Running
             task_chain.task_status = AGF_Task_Status.AGF_Status_Running
             while True:
                 for task in task_chain.task_list:
                     task_chain.task_current = task
                     if task['task_name'] == 'pick':#1
                         #########Di chuyen den diem detect pallet###########
-                        # print('AGF di chuyen den diem detect pallet')
-                        # Robot.navigation({'id':task['detect_point']})
-                        # time.sleep(5)
-                        # while True:
-                        #     if Robot.check_target(Robot.data_Status,target=task['detect_point']):
-                        #         break
-                        #     if task_chain.task_signal_cancel:
-                        #         break
-                        #     time.sleep(1)
-                        # if task_chain.task_signal_cancel:
-                        #     break
-                        # #########Di chuyen den diem lay hang pallet#########
-                        # print('AGF di chuyen den diem lay pallet')
-                        # Robot.navigation({'id':task['pick_point']})
-                        # time.sleep(5)
-                        # while True:
-                        #     if Robot.check_target(Robot.data_Status,target=task['pick_point']):
-                        #         break
-                        #     if task_chain.task_signal_cancel:
-                        #         break
-                        #     time.sleep(1)
-                        # if task_chain.task_signal_cancel:
-                        #     break
+                        print('AGF di chuyen den diem detect pallet')
+                        Robot.navigation({'id':task['detect_point']})
+                        time.sleep(5)
+                        while True:
+                            if Robot.check_target(Robot.data_Status,target=task['detect_point']):
+                                break
+                            if task_chain.task_signal_cancel:
+                                Robot.cancel_navigation()
+                                break
+                            time.sleep(1)
+                        if task_chain.task_signal_cancel:
+                            break
+                        #########Di chuyen den diem lay hang pallet#########
+                        print('AGF di chuyen den diem lay pallet')
+                        Robot.navigation({'id':task['pick_point']})
+                        time.sleep(5)
+                        while True:
+                            if Robot.check_target(Robot.data_Status,target=task['pick_point']):
+                                break
+                            if task_chain.task_signal_cancel:
+                                Robot.cancel_navigation()
+                                break
+                            time.sleep(1)
+                        if task_chain.task_signal_cancel:
+                            break
                         #########Lay pallet#######
                         print('AMR lay pallet')
                         lift_set_mission(mission="pick")
@@ -161,17 +158,17 @@ def task_chain_run_func():
                     ######################
                     elif task['task_name'] == 'put':#2
                         # #AGF di chuyen den diem tra pallet
-                        # print('AGF di chuyen den diem tra pallet')
-                        # Robot.navigation({'id':task['put_point']})
-                        # time.sleep(5)
-                        # while True:
-                        #     if Robot.check_target(Robot.data_Status,target=task['put_point']):
-                        #         break
-                        #     if task_chain.task_signal_cancel:
-                        #         break
-                        #     time.sleep(1)
-                        # if task_chain.task_signal_cancel:
-                        #     break
+                        print('AGF di chuyen den diem tra pallet')
+                        Robot.navigation({'id':task['put_point']})
+                        time.sleep(5)
+                        while True:
+                            if Robot.check_target(Robot.data_Status,target=task['put_point']):
+                                break
+                            if task_chain.task_signal_cancel:
+                                break
+                            time.sleep(1)
+                        if task_chain.task_signal_cancel:
+                            break
                         #AGF tra pallet
                         print('AMR tra pallet')
                         lift_set_mission(mission="put")
@@ -217,23 +214,27 @@ def task_chain_run_func():
                             time.sleep(1)
                         #--------------------------------------------------------
                 if task_chain.task_signal_cancel:
-                    task_chain.task_signal_cancel = False
-                    task_chain.task_status = AGF_Task_Status.AGF_Status_None
                     break
                 if not task_chain.loop:
                     break
-            #khi AGF xong nhiem vu
+            
+            if task_chain.task_signal_cancel:#sau khi huy nhiem vu
+                work_status.agf_work_mode = "Manual"
+                work_status.mission_status = Mission_Status.Mission_Status_Cancle
+                task_chain.task_signal_cancel = False
+            else:#khi AGF xong nhiem vu
+                work_status.mission_status = Mission_Status.Mission_Status_Complete
             task_chain.task_list = []
             task_chain.task_current = {}
             task_chain.task_status = AGF_Task_Status.AGF_Status_None
-            work_status.agf_idle = True
+            work_status.agf_status = AGF_Status.AGF_Status_Idle
         print('-----------------------------------------------')
         time.sleep(3)
 
 
 if __name__ == '__main__':
     agf_init_func()
-    work_status.agf_idle = True
+    work_status.agf_status = AGF_Status.AGF_Status_Idle
     lift_set_led(2)
 
     task_poll_modbus = Thread(target=mb_client.poll_server,args=())

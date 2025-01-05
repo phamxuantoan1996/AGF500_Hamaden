@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from agf_init import Robot,mb_client,work_status,task_chain
+from agf_work_status import AGF_Status
 
 app = Flask(__name__)
 CORS(app=app)
@@ -25,7 +26,7 @@ def check_wait_time(time:int) -> bool:
 def post_task_chain():
     try:
         content = request.json
-        if (not work_status.agf_idle) or (work_status.agf_error) or (work_status.agf_work_mode != content['work_mode']): 
+        if (work_status.agf_status == AGF_Status.AGF_Status_Busy) or (len(work_status.agf_error) > 0) or (work_status.agf_work_mode != content['work_mode']): 
             return jsonify({"result":False,"desc":""}),200
         check_task = True
         keys = content.keys()
@@ -37,9 +38,13 @@ def post_task_chain():
                     keys = task.keys()
                     if 'task_name' in keys:
                         if task['task_name'] == 'pick':
-                            pass
+                            if ('pick_point' in keys) and ('detect_point' in keys):
+                                if not check_point(point=task['pick_point']) or not check_point(point=task['detect_point']):
+                                    check_task = False
                         elif task['task_name'] == 'put':
-                            pass
+                            if ('put_point' in keys):
+                                if not check_point(point=task['put_point']):
+                                    check_task = False
                         elif task['task_name'] == 'navigation':
                             if 'target_point' in keys:
                                 if not check_point(point=task['target_point']):
@@ -51,7 +56,7 @@ def post_task_chain():
                         else:
                             check_task = False
         if check_task:
-            work_status.agf_idle = False
+            work_status.agf_status = AGF_Status.AGF_Status_Busy
             task_chain.task_list = task_list
             task_chain.loop = loop
             return jsonify({"result":True,"desc":""}),201
@@ -168,7 +173,7 @@ def lift_control():
     try:
         content = request.json
         keys = content.keys()
-        if 'lift' in keys and work_status.agf_idle and len(work_status.agf_error) == 0:
+        if 'lift' in keys and work_status.agf_status == AGF_Status.AGF_Status_Idle and len(work_status.agf_error) == 0:
             lift_manual_control({"type":"lift","value":content['lift']})
             return jsonify({"result":True,"desc":""}),201
         return jsonify({"result":False,"desc":""}),400
@@ -180,7 +185,7 @@ def slider_control():
     try:
         content = request.json
         keys = content.keys()
-        if 'slider' in keys:
+        if 'slider' in keys and work_status.agf_status == AGF_Status.AGF_Status_Idle and len(work_status.agf_error) == 0:
             if content['slider'] == 'in':
                 lift_manual_control({"type":"slider","value":"in"})
                 return jsonify({"result":True,"desc":""}),201

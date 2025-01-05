@@ -16,10 +16,19 @@ class Pallet_State:
     Pallet_Full = "Full"
     Pallet_None = "None"
 
+class Mission_Status:
+    Mission_Status_None = "None"
+    Mission_Status_Cancle = "Cancle"
+    Mission_Status_Running = "Running"
+    Mission_Status_Complete = "Complete"
+
+class AGF_Status:
+    AGF_Status_Idle = 1
+    AGF_Status_Busy = 2
+
 class AGF_Work_Status:
     def __init__(self,agf_id:int):
         self.__agf_id = agf_id
-        self.__agf_idle = False
         self.__agf_error = []
         self.__agf_work_mode = AGF_Work_Mode.Manual
         self.__pallet = False
@@ -29,15 +38,16 @@ class AGF_Work_Status:
         self.__slider_dir = Slider_Dir.Stop
         self.__lift_dir = Lift_Dir.Lift_Stop
         self.__lift_pos = 0
-        self.__agf_charging = False
         self.__agf_sound_audio = ""
         self.__notices = "AMR Busy"
+        self.__mission_status = Mission_Status.Mission_Status_None
+        self.__agf_status = AGF_Status.AGF_Status_Idle
 
     
     def get_agf_work_status(self) -> dict:
         status = {
             "agf_id":self.__agf_id,
-            "agf_idle":self.__agf_idle,
+            "agf_status":self.__agf_status,
             "agf_error":self.__agf_error,
             "pallet":self.__pallet,
             "task_list":self.__task_list,
@@ -47,7 +57,8 @@ class AGF_Work_Status:
             "lift_dir":self.__lift_dir,
             "lift_pos":self.__lift_pos,
             "agf_work_mode":self.__agf_work_mode,
-            "notices":self.__notices
+            "notices":self.__notices,
+            "mission_status":self.__mission_status
         }
         return status
     
@@ -59,11 +70,11 @@ class AGF_Work_Status:
         self.__agf_id = id
 
     @property
-    def agf_idle(self) -> bool:
-        return self.__agf_idle
-    @agf_idle.setter
-    def agf_idle(self,idle:bool):
-        self.__agf_idle = idle
+    def agf_status(self) -> AGF_Status:
+        return self.__agf_status
+    @agf_status.setter
+    def agf_status(self,status:AGF_Status):
+        self.__agf_status = status
 
     @property
     def agf_error(self) -> list:
@@ -152,3 +163,10 @@ class AGF_Work_Status:
     @notices.setter
     def notices(self,notice:str):
         self.notices = notice
+
+    @property
+    def mission_status(self) -> Mission_Status:
+        return self.__mission_status
+    @mission_status.setter
+    def mission_status(self,status:Mission_Status):
+        self.__mission_status = status
