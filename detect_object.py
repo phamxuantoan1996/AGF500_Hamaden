@@ -4,43 +4,20 @@ import open3d as o3d
 import cv2
 from ultralytics import YOLO
 
+from threading import Thread
+
 def camera_config():
     # Create a pipeline
     pipeline = rs.pipeline()
-    # Create a config and configure the pipeline to stream
-    #  different resolutions of color and depth streams
     config = rs.config()
-    # Get device product line for setting a supporting resolution
-    # pipeline_wrapper = rs.pipeline_wrapper(pipeline)
-    # pipeline_profile = config.resolve(pipeline_wrapper)
-    # device = pipeline_profile.get_device()
-    #######################################################################
-    # found_rgb = False
-    # for s in device.sensors:
-    #     if s.get_info(rs.camera_info.name) == 'RGB Camera':
-    #         found_rgb = True
-    #         break
-    # if not found_rgb:
-    #     print("The demo requires Depth camera with Color sensor")
-    #     exit(0)
-
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
     config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
     # Start streaming
-    profile = pipeline.start(config)
+    pipeline.start(config)
 
-    # Getting the depth sensor's depth scale (see rs-align example for explanation)
-    # depth_sensor = profile.get_device().first_depth_sensor()
-    # depth_scale = depth_sensor.get_depth_scale()
-    # print("Depth Scale is: " , depth_scale)
-
-    # Create an align object
-    # rs.align allows us to perform alignment of depth frames to others frames
-    # The "align_to" is the stream type to which we plan to align depth frames.
     align_to = rs.stream.color
     align = rs.align(align_to)
-
     return align,pipeline
 
 def check_human(align,pipeline,thres = 1.0) -> bool:
@@ -48,8 +25,6 @@ def check_human(align,pipeline,thres = 1.0) -> bool:
         while True:
             # Get frameset of color and depth
             frames = pipeline.wait_for_frames()
-            # frames.get_depth_frame() is a 640x360 depth image
-
             # Align the depth frame to color frame
             aligned_frames = align.process(frames)
             # Get aligned frames
@@ -58,11 +33,9 @@ def check_human(align,pipeline,thres = 1.0) -> bool:
             # Validate that both frames are valid
             if not aligned_depth_frame or not color_frame:
                 continue
-
             # depth_image = np.asanyarray(aligned_depth_frame.get_data())
             color_image = np.asanyarray(color_frame.get_data())
             # color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
-                
             model = YOLO("yolo11n-seg.pt")
             results = model.predict(source=color_image, save=False, classes=[0])
             arr_np = np.zeros(shape=(480,640),dtype=np.uint8)
@@ -113,5 +86,6 @@ def check_human(align,pipeline,thres = 1.0) -> bool:
 
 if __name__ == "__main__":
     align,pipeline = camera_config()
-    check_human(align,pipeline,thres=1)
+    task_check_human = Thread(target=check_human,args=(align:=align,pipeline:=pipeline,thres:=1))
+    task_check_human.run()
 

@@ -26,6 +26,7 @@ def check_wait_time(time:int) -> bool:
 def post_task_chain():
     try:
         content = request.json
+        mission_recv = content
         if (work_status.agf_status == AGF_Status.AGF_Status_Busy) or (len(work_status.agf_error) > 0) or (work_status.agf_work_mode != content['work_mode']): 
             return jsonify({"result":False,"desc":""}),200
         check_task = True
@@ -56,6 +57,7 @@ def post_task_chain():
                         else:
                             check_task = False
         if check_task:
+            work_status.mission_recv = mission_recv
             work_status.agf_status = AGF_Status.AGF_Status_Busy
             task_chain.task_list = task_list
             task_chain.loop = loop

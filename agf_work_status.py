@@ -42,6 +42,9 @@ class AGF_Work_Status:
         self.__notices = "AMR Busy"
         self.__mission_status = Mission_Status.Mission_Status_None
         self.__agf_status = AGF_Status.AGF_Status_Idle
+        self.__is_human = False
+        self.__mission_recv = None
+        self.__task_index = None
 
     
     def get_agf_work_status(self) -> dict:
@@ -58,7 +61,9 @@ class AGF_Work_Status:
             "lift_pos":self.__lift_pos,
             "agf_work_mode":self.__agf_work_mode,
             "notices":self.__notices,
-            "mission_status":self.__mission_status
+            "mission_status":self.__mission_status,
+            "mission_recv":self.__mission_recv,
+            "task_index":self.__task_index
         }
         return status
     
@@ -170,3 +175,24 @@ class AGF_Work_Status:
     @mission_status.setter
     def mission_status(self,status:Mission_Status):
         self.__mission_status = status
+
+    @property
+    def is_human(self) -> bool:
+        return self.__is_human
+    @is_human.setter
+    def is_human(self,human):
+        self.__is_human = human
+
+    @property
+    def mission_recv(self) -> dict:
+        return self.__mission_recv
+    @mission_recv.setter
+    def mission_recv(self,mission:dict):
+        self.__mission_recv = mission
+
+    @property
+    def task_index(self) -> int:
+        return self.__task_index
+    @task_index.setter
+    def task_index(self,index:int):
+        self.__task_index = index

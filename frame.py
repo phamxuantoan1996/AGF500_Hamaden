@@ -19,8 +19,11 @@ class frame:
     
 class tranmit:
     def sendAPI(headerAPI:socket.socket,code_api:int,jsonstring:dict):
-        headerAPI.send(frame.creat(1,code_api,jsonstring))
-        dataall = b''
+        try:
+            headerAPI.send(frame.creat(1,code_api,jsonstring))
+            dataall = b''
+        except Exception as e:
+            return
         try:    
             data = headerAPI.recv(16)
         except socket.timeout:
