@@ -25,7 +25,7 @@ class ESA_API:
         self.data_Status={}
         self.keys = {
             "keys":["area_ids","confidence","current_station","last_station","vx","vy","blocked","block_reason","battery_level",
-                "task_status","target_id","emergency","x","y","unfinished_path","target_dist","angle","reloc_status","current_map", "charging"],
+                "task_status","target_id","emergency","x","y","unfinished_path","target_dist","angle","reloc_status","current_map", "charging","errors"],
             "return_laser":False,
             "return_beams3D":False
         }

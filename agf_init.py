@@ -26,7 +26,7 @@ AGF_Param_Config = {
 task_chain = AGF_Task_Chain()
 work_status = AGF_Work_Status(agf_id=AGF_Param_Config['agf_id'])
 Robot = ESA_API(host=AGF_Param_Config['ip_src'])
-mb_client = Modbus_Serial_Client(slave_id=AGF_Param_Config['modbus_slave_id'],number_of_input=50,number_of_hold=50,input_regs_addr=1000,hold_regs_addr=2000,time_poll=0.5,port=AGF_Param_Config['modbus_port'],baudrate=AGF_Param_Config['modbus_baudrate'],timeout_modbus=5)
+mb_client = Modbus_Serial_Client(slave_id=AGF_Param_Config['modbus_slave_id'],number_of_input=50,number_of_hold=50,input_regs_addr=1000,hold_regs_addr=2000,time_poll=0.05,port=AGF_Param_Config['modbus_port'],baudrate=AGF_Param_Config['modbus_baudrate'],timeout_modbus=5)
 
 
 def agf_init_func() -> bool:

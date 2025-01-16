@@ -3,6 +3,7 @@ import minimalmodbus
 import serial
 import time
 from logfile import LogFile
+from threading import Thread
 
 class Modbus_Function_Code:
     #input
@@ -121,8 +122,15 @@ class Modbus_Serial_Client(Modbus_Client):
                 self._modbus_error = False
             else:
                 self._modbus_error = True
-            time.sleep(self._time_poll)
-
+            time.sleep(0.01)
+# if __name__ == '__main__':
+#     mb_client = Modbus_Serial_Client(slave_id=1,number_of_input=50,number_of_hold=50,input_regs_addr=1000,hold_regs_addr=2000,time_poll=0.1,port='/dev/ttyUSB0',baudrate=115200,timeout_modbus=5)
+#     mb_client.connect_to_server()
+#     task_poll_modbus = Thread(target=mb_client.poll_server,args=())
+#     task_poll_modbus.start()
+#     while True:
+#         color = input('nhap : ')
+#         mb_client.hold_regs[12] = int(color)
             
         
 

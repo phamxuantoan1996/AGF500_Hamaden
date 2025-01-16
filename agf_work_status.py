@@ -45,6 +45,7 @@ class AGF_Work_Status:
         self.__is_human = False
         self.__mission_recv = None
         self.__task_index = None
+        self.__human = False
 
     
     def get_agf_work_status(self) -> dict:
@@ -63,7 +64,8 @@ class AGF_Work_Status:
             "notices":self.__notices,
             "mission_status":self.__mission_status,
             "mission_recv":self.__mission_recv,
-            "task_index":self.__task_index
+            "task_index":self.__task_index,
+            "human":self.__human
         }
         return status
     
@@ -167,7 +169,7 @@ class AGF_Work_Status:
         return self.__notices
     @notices.setter
     def notices(self,notice:str):
-        self.notices = notice
+        self.__notices = notice
 
     @property
     def mission_status(self) -> Mission_Status:
@@ -196,3 +198,10 @@ class AGF_Work_Status:
     @task_index.setter
     def task_index(self,index:int):
         self.__task_index = index
+    
+    @property
+    def human(self) -> bool:
+        return self.__human
+    @human.setter
+    def human(self,val:bool):
+        self.__human = val
