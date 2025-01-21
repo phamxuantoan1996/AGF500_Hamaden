@@ -95,6 +95,19 @@ def cancel_mission_agf():
         return jsonify({"result":True,"desc":""}),201
     else:
         return jsonify({"result":False,"desc":""}),400
+    
+@app.route('/detect_pallet',methods = ['POST'])
+def detect_pallet():
+    try:
+        content = request.json
+        keys = content.keys()
+        if 'resume' in keys:
+            task_chain.task_signal_detect_pallet_resume = True
+            return jsonify({"result":True,"desc":""}),201
+        else:
+            return jsonify({"result":False,"desc":""}),200
+    except Exception as e:
+        return jsonify({"result":False,"desc":str(e)}),500
         
 
 

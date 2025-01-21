@@ -47,6 +47,20 @@ def new_coordinates_after_resize_img(original_size, new_size, original_coordinat
   x, y = int(xy[0]), int(xy[1])
   return (x, y)
 
+def calib_array_value(arr_np:np.ndarray) -> np.ndarray:
+    mean1 = arr_np.mean()
+    arr_np1 = arr_np[np.where(arr_np > mean1)]
+
+    mean2 = arr_np.mean()
+    arr_np2 = arr_np[np.where(arr_np < mean2)]
+
+    if arr_np1.shape > arr_np2.shape:
+        return arr_np1
+    elif arr_np1.shape < arr_np2.shape:
+        return arr_np2
+    else:
+        return arr_np2
+
 def task_capture_frames_func(realsenses:list,queue_frames:Queue):
     while True:
         if not detect_human['enable']:
@@ -69,15 +83,16 @@ def task_capture_frames_func(realsenses:list,queue_frames:Queue):
                 depth_image = np.asanyarray(aligned_depth_frame.get_data())
 
                 if index == 0:
-                    rot_color = cv.rotate(color_image,cv.ROTATE_90_COUNTERCLOCKWISE)
-                    rot_depth = cv.rotate(depth_image,cv.ROTATE_90_COUNTERCLOCKWISE)
+                    rot_color = cv.rotate(color_image,cv.ROTATE_90_CLOCKWISE)
+                    rot_depth = cv.rotate(depth_image,cv.ROTATE_90_CLOCKWISE)
                 elif index == 1:
-                    rot_color = cv.rotate(color_image,cv.ROTATE_90_COUNTERCLOCKWISE)
-                    rot_depth = cv.rotate(depth_image,cv.ROTATE_90_COUNTERCLOCKWISE)
+                    rot_color = cv.rotate(color_image,cv.ROTATE_90_CLOCKWISE)
+                    rot_depth = cv.rotate(depth_image,cv.ROTATE_90_CLOCKWISE)
 
                 element = (rot_color,aligned_depth_frame,rot_depth)
                 list_detect.append(element)
                 index = index + 1
+                print('unit',aligned_depth_frame.get_units())
             
             img_h = None
             depth_h = None
@@ -89,7 +104,8 @@ def task_capture_frames_func(realsenses:list,queue_frames:Queue):
                 img_h = cv.hconcat([list_detect[0][0],list_detect[0][0]])
                 depth_h = cv.hconcat([list_detect[0][2],list_detect[0][2]])
             img_resize_dwn = cv.resize(img_h,dsize=None,fx=0.5,fy=0.5,interpolation=cv.INTER_CUBIC) #640,960
-
+            img_resize_dwn[:,0:100] = [0,0,0]
+            img_resize_dwn[:,382:] = [0,0,0]
             model = YOLO("yolo11n-seg.pt")
             results = model.predict(source=img_resize_dwn, save=False, classes=[0],imgsz=[320,480])
 
@@ -125,16 +141,28 @@ def task_capture_frames_func(realsenses:list,queue_frames:Queue):
                 for rec in list_rec:
                     point1 = new_coordinates_after_resize_img((320,480), (640,960), (rec[0],rec[1]))
                     point2 = new_coordinates_after_resize_img((320,480), (640,960), (rec[2],rec[3]))
+
+    
                     roi = depth_person[point1[1]:point2[1],point1[0]:point2[0]]
-                    distance = np.mean(roi[np.nonzero(roi)])*(list_detect[0][1].get_units())
+                    roi_zero = roi[np.nonzero(roi)]
+                    calib_roi = calib_array_value(roi_zero)
+
+                    if point1[0] >= 479:
+                        distance = calib_roi.mean()*(list_detect[1][1].get_units())
+                    else:
+                        distance = calib_roi.mean()*(list_detect[0][1].get_units())
+                    
+                    distance = float(distance)
+                    # distance = np.mean(roi[np.nonzero(roi)])*(list_detect[0][1].get_units())
+                    
                     distance = round(distance,4)
                     list_distance.append(distance)
-                    # if distance < 2.0:
-                    #     cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
-                    #     cv.rectangle(img_h,point1,point2,(0,0,255),2)
-                    # else:
-                    #     cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
-                    #     cv.rectangle(img_h,point1,point2,(0,255,0),2)
+                    if distance < 2.8:
+                        cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                        cv.rectangle(img_h,point1,point2,(0,0,255),2)
+                    else:
+                        cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+                        cv.rectangle(img_h,point1,point2,(0,255,0),2)
             if len(list_distance) == 0:
                 detect_human['human'] = False
             else:
@@ -143,8 +171,8 @@ def task_capture_frames_func(realsenses:list,queue_frames:Queue):
                 else:
                     detect_human['human'] = True
             
-            # cv.imshow('win1',img_h)
-            # cv.imshow('win2',img_person_mask)
+            cv.imshow('win1',img_h)
+            cv.imshow('win2',img_resize_dwn)
             
             if cv.waitKey(1) == ord('q'):
                 break
@@ -185,7 +213,7 @@ if __name__ == '__main__':
         'human': False
     }
     queue_frames = Queue(maxsize=1)
-    realsense1 = realsense(serial_number='105322250851')
+    realsense1 = realsense(serial_number='215222077273')
     realsense1.realsense_config()
     realsense2 = realsense(serial_number='213522072335')
     realsense2.realsense_config()

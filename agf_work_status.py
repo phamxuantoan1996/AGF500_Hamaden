@@ -46,6 +46,7 @@ class AGF_Work_Status:
         self.__mission_recv = None
         self.__task_index = None
         self.__human = False
+        self.__detect_pallet = False
 
     
     def get_agf_work_status(self) -> dict:
@@ -65,7 +66,8 @@ class AGF_Work_Status:
             "mission_status":self.__mission_status,
             "mission_recv":self.__mission_recv,
             "task_index":self.__task_index,
-            "human":self.__human
+            "human":self.__human,
+            "detect_pallet":self.__detect_pallet
         }
         return status
     
@@ -205,3 +207,10 @@ class AGF_Work_Status:
     @human.setter
     def human(self,val:bool):
         self.__human = val
+
+    @property
+    def detect_pallet(self) -> bool:
+        return self.__detect_pallet
+    @detect_pallet.setter
+    def detect_pallet(self,val:bool):
+        self.__detect_pallet = val

@@ -87,21 +87,27 @@ def task_agf_poll_status_func():
                 list_error.append("modbus")
                 notices = "AGF lỗi truyền thông modbus."
             work_status.agf_error = list_error
-            if work_status.task_current != {}:
+            #audio
+            if Robot.data_Status['emergency']:
+                Robot.play_audio({"name":"error","loop":False})
+            elif work_status.detect_pallet:
+                Robot.play_audio({"name":"detect_pallet","loop":False})
+            elif work_status.task_current != {}:
                 if work_status.task_current['task_name'] == 'pick' and (mb_client.hold_regs[0] != 0):
-                    if work_status.human:
+                    # if (work_status.human or mb_client.input_regs[7] != 0):
+                    if (work_status.human):
                         Robot.play_audio({"name":"human","loop":False})
                     else:
                         Robot.play_audio({"name":"picking_pallet","loop":False})
                 elif work_status.task_current['task_name'] == 'put' and (mb_client.hold_regs[0] != 0):
-                    if work_status.human:
+                    # if (work_status.human or mb_client.input_regs[7] != 0):
+                    if (work_status.human):
                         Robot.play_audio({"name":"human","loop":False})
                     else:
                         Robot.play_audio({"name":"puting_pallet","loop":False})
-            
+            #led
             if Robot.data_Status['emergency']:
                 lift_set_led(9) #Blink red
-                Robot.play_audio({"name":"error","loop":False})
             elif Robot.data_Status['blocked'] or mb_client.modbus_error or work_status.is_human:
                 lift_set_led(8) #Red
             elif (Robot.data_Status['task_status'] == 0 or Robot.data_Status['task_status'] == 1 or Robot.data_Status['task_status'] == 4 or Robot.data_Status['task_status'] == 6) and work_status.task_list == []:
@@ -110,8 +116,8 @@ def task_agf_poll_status_func():
                 lift_set_led(11)
             else:
                 if work_status.task_current != {}:
-                    # if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (mb_client.input_regs[7] != 0) and (mb_client.hold_regs[0] != 0):
-                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and work_status.human and (mb_client.hold_regs[0] != 0):
+                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human) and (mb_client.hold_regs[0] != 0):
+                    # if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human or mb_client.input_regs[7] != 0) and (mb_client.hold_regs[0] != 0):
                         lift_set_led(8)
                         notices = "Có vật cản trong vùng AGF lấy/trả pallet."
                     else:
@@ -119,8 +125,10 @@ def task_agf_poll_status_func():
                 else:
                     lift_set_led(2)
             work_status.notices = notices
-            # print('input : ')
-            # print(mb_client.input_regs)
+            print('input : ')
+            print(mb_client.input_regs)
+            print('hold : ')
+            print(mb_client.hold_regs)
 
         except Exception as e:
             print(e)
@@ -172,12 +180,9 @@ def task_check_human_func():
         if (work_status.task_current['task_name'] != 'pick' and work_status.task_current['task_name'] != 'put') or (mb_client.hold_regs[0] == 0):
             print('Dung detect nguoi')
             break
-        
         time.sleep(0.1)
     work_status.human = False
     mb_client.hold_regs[13] = 0
-
-
     url_detect_human = "http://127.0.0.1:8001/detect_human"
     detect_human = {
         "enable":False,
@@ -224,6 +229,46 @@ def task_chain_run_func():
                                 Robot.cancel_navigation()
                                 break
                             time.sleep(1)
+                        # detect pallet
+                        # while True:
+                        #     try:
+                        #         url_detect_pallet = "http://127.0.0.1:8002/detect_pallet"
+                        #         detect_pallet = {
+                        #             "enable":True,
+                        #         }
+                        #         response = requests.post(url=url_detect_pallet,json=detect_pallet)
+                        #         if response.status_code != 201:
+                        #             time.sleep(2)
+                        #             continue
+                        #         content = None
+                        #         while True:
+                        #             response = requests.get(url=url_detect_pallet)
+                        #             if response.status_code != 200:
+                        #                 time.sleep(2)
+                        #                 continue
+                        #             content = response.json()
+                        #             break
+                        #         keys = content.keys()
+                        #         if 'enable' in keys and 'result' in keys and 'status' in keys:
+                        #             if content['result']['angle'] != None and content['result']['delta_x'] != None and content['result']['delta_z'] != None and content['result']['area'] != None:
+                        #                 print('angle = ',content['result']['angle'])
+                        #                 print('delta x : ',content['result']['delta_x'])
+                        #                 print('area : ',content['result']['area'])
+                        #                 if (content['result']['angle'] < 1.5) and (content['result']['delta_x'] < 0.02 and content['result']['delta_x'] > -0.02) and (content['result']['area'] >= 0.26 and content['result']['area'] <= 0.30):
+                        #                     work_status.detect_pallet = False
+                        #                     break
+                        #                 # else:
+                        #         work_status.detect_pallet = True
+                        #         while True:
+                        #             if task_chain.task_signal_detect_pallet_resume:
+                        #                 task_chain.task_signal_detect_pallet_resume = False
+                        #                 break
+                        #             time.sleep(2)
+                        #         work_status.detect_pallet = False
+                        #     except Exception as e:
+                        #         print(e)
+                        #     time.sleep(2)
+                        ##############
                         if task_chain.task_signal_cancel:
                             break
                         #########Di chuyen den diem lay hang pallet#########
@@ -240,14 +285,14 @@ def task_chain_run_func():
                         if task_chain.task_signal_cancel:
                             break
                         #########Lay pallet#######
+                        task_check_human = Thread(target=task_check_human_func,args=())
+                        task_check_human.start()
                         print('AMR lay pallet')
                         lift_set_mission(mission="pick")
                         time.sleep(1)
                         lift_set_mode("auto")
                         time.sleep(1)
                         #bat dau detect nguoi
-                        task_check_human = Thread(target=task_check_human_func,args=())
-                        task_check_human.start()
                         #########################
                         while True:
                             if len(mb_client.input_regs) == 50:
@@ -290,13 +335,13 @@ def task_chain_run_func():
                         if task_chain.task_signal_cancel:
                             break
                         #AGF tra pallet
+                        task_check_human = Thread(target=task_check_human_func,args=())
+                        task_check_human.start()
                         print('AMR tra pallet')
                         lift_set_mission(mission="put")
                         time.sleep(1)
                         lift_set_mode("auto")
                         time.sleep(1)
-                        task_check_human = Thread(target=task_check_human_func,args=())
-                        task_check_human.start()
                         while True:
                             if len(mb_client.input_regs) == 50:
                                 if mb_client.input_regs[0] == 0:

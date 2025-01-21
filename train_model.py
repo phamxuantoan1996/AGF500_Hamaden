@@ -13,11 +13,12 @@ from queue import Queue
 import pyrealsense2 as rs
 import numpy as np
 
-
 pipeline = rs.pipeline()
 config = rs.config()
+config.enable_device('105322250851')
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+
 pipeline.start(config)
 depth_sensor= pipeline.get_active_profile().get_device().first_depth_sensor()
 depth_sensor. set_option(rs.option.depth_units, 0.0001)

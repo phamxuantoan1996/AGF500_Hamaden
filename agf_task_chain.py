@@ -10,6 +10,7 @@ class AGF_Task_Chain:
         self.__loop = False
         self.__task_status = AGF_Task_Status.AGF_Status_None
         self.__task_signal_cancel = False
+        self.__task_signal_detect_pallet_resume = False
 
     @property
     def task_list(self) -> list:
@@ -45,3 +46,10 @@ class AGF_Task_Chain:
     @task_signal_cancel.setter
     def task_signal_cancel(self,signal:bool):
         self.__task_signal_cancel = signal
+
+    @property
+    def task_signal_detect_pallet_resume(self) -> bool:
+        return self.__task_signal_detect_pallet_resume
+    @task_signal_detect_pallet_resume.setter
+    def task_signal_detect_pallet_resume(self,val : bool):
+        self.__task_signal_detect_pallet_resume = val
