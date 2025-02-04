@@ -157,12 +157,12 @@ def task_capture_frames_func(realsenses:list,queue_frames:Queue):
                     
                     distance = round(distance,4)
                     list_distance.append(distance)
-                    if distance < 2.8:
-                        cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
-                        cv.rectangle(img_h,point1,point2,(0,0,255),2)
-                    else:
-                        cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
-                        cv.rectangle(img_h,point1,point2,(0,255,0),2)
+                    # if distance < 2.8:
+                    #     cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                    #     cv.rectangle(img_h,point1,point2,(0,0,255),2)
+                    # else:
+                    #     cv.putText(img_h, str(distance), (point1[0]+5, point1[1]+50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+                    #     cv.rectangle(img_h,point1,point2,(0,255,0),2)
             if len(list_distance) == 0:
                 detect_human['human'] = False
             else:
@@ -171,8 +171,8 @@ def task_capture_frames_func(realsenses:list,queue_frames:Queue):
                 else:
                     detect_human['human'] = True
             
-            cv.imshow('win1',img_h)
-            cv.imshow('win2',img_resize_dwn)
+            # cv.imshow('win1',img_h)
+            # cv.imshow('win2',img_resize_dwn)
             
             if cv.waitKey(1) == ord('q'):
                 break

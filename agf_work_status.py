@@ -30,7 +30,7 @@ class AGF_Work_Status:
     def __init__(self,agf_id:int):
         self.__agf_id = agf_id
         self.__agf_error = []
-        self.__agf_work_mode = AGF_Work_Mode.Manual
+        self.__agf_work_mode = AGF_Work_Mode.Manual   
         self.__pallet = False
         self.__task_list = []
         self.__task_current = {}

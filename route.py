@@ -92,6 +92,7 @@ def get_status_amr():
 def cancel_mission_agf():
     if task_chain.task_current != {}:
         task_chain.task_signal_cancel = True
+        Robot.cancel_navigation()
         return jsonify({"result":True,"desc":""}),201
     else:
         return jsonify({"result":False,"desc":""}),400

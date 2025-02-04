@@ -94,14 +94,14 @@ def task_agf_poll_status_func():
                 Robot.play_audio({"name":"detect_pallet","loop":False})
             elif work_status.task_current != {}:
                 if work_status.task_current['task_name'] == 'pick' and (mb_client.hold_regs[0] != 0):
-                    # if (work_status.human or mb_client.input_regs[7] != 0):
-                    if (work_status.human):
+                    if (work_status.human or mb_client.input_regs[7] != 0):
+                    # if (work_status.human):
                         Robot.play_audio({"name":"human","loop":False})
                     else:
                         Robot.play_audio({"name":"picking_pallet","loop":False})
                 elif work_status.task_current['task_name'] == 'put' and (mb_client.hold_regs[0] != 0):
-                    # if (work_status.human or mb_client.input_regs[7] != 0):
-                    if (work_status.human):
+                    if (work_status.human or mb_client.input_regs[7] != 0):
+                    # if (work_status.human):
                         Robot.play_audio({"name":"human","loop":False})
                     else:
                         Robot.play_audio({"name":"puting_pallet","loop":False})
@@ -116,8 +116,8 @@ def task_agf_poll_status_func():
                 lift_set_led(11)
             else:
                 if work_status.task_current != {}:
-                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human) and (mb_client.hold_regs[0] != 0):
-                    # if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human or mb_client.input_regs[7] != 0) and (mb_client.hold_regs[0] != 0):
+                    # if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human) and (mb_client.hold_regs[0] != 0):
+                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human or mb_client.input_regs[7] != 0) and (mb_client.hold_regs[0] != 0):
                         lift_set_led(8)
                         notices = "Có vật cản trong vùng AGF lấy/trả pallet."
                     else:
@@ -129,13 +129,14 @@ def task_agf_poll_status_func():
             print(mb_client.input_regs)
             print('hold : ')
             print(mb_client.hold_regs)
+            # print(work_status.agf_sound_audio)
 
         except Exception as e:
             print(e)
         time.sleep(0.3)
 
 def task_post_status_agf_andon_server_func():
-    url_post_status = "http://192.168.1.238:9000/robot_status/AGF_1"
+    url_post_status = "http://10.122.79.118:9000/robot_status/AGF_1"
     while True:
         try:
             status = Robot.data_Status
@@ -200,16 +201,16 @@ def task_check_human_func():
 def task_chain_run_func():
     while True:
         if len(task_chain.task_list) > 0:
-            # if work_status.agf_work_mode == "Auto":
-            #     while True:
-            #         try:
-            #             url_post_progress = "http://192.168.1.238:9000/progress_mission"
-            #             confirm = {"mission_id":work_status.mission_recv['mission_id'],"mission_status":2}
-            #             requests.post(url=url_post_progress,json=confirm)
-            #             break
-            #         except Exception as e:
-            #             print(e)
-            #         time.sleep(0.5)
+            if work_status.agf_work_mode == "Auto":
+                while True:
+                    try:
+                        url_post_progress = "http://10.122.79.118:9000/progress_mission"
+                        confirm = {"mission_id":work_status.mission_recv['mission_id'],"mission_status":2}
+                        requests.post(url=url_post_progress,json=confirm)
+                        break
+                    except Exception as e:
+                        print(e)
+                    time.sleep(0.5)
             work_status.mission_status = Mission_Status.Mission_Status_Running
             task_chain.task_status = AGF_Task_Status.AGF_Status_Running
             while True:
@@ -392,29 +393,29 @@ def task_chain_run_func():
                     task_index = task_index + 1
                 #################################
                 if task_chain.task_signal_cancel:
-                    # if work_status.agf_work_mode == 'Auto':
-                    #     while True:
-                    #         try:
-                    #             url_post_progress = "http://192.168.1.238:9000/progress_mission"
-                    #             progress = {"mission_id":work_status.mission_recv['mission_id'],"mission_status":20}
-                    #             requests.post(url=url_post_progress,json=progress)
-                    #             break
-                    #         except Exception as e:
-                    #             print(e)
-                    #         time.sleep(0.5)
+                    if work_status.agf_work_mode == 'Auto':
+                        while True:
+                            try:
+                                url_post_progress = "http://10.122.79.118:9000/progress_mission"
+                                progress = {"mission_id":work_status.mission_recv['mission_id'],"mission_status":20}
+                                requests.post(url=url_post_progress,json=progress)
+                                break
+                            except Exception as e:
+                                print(e)
+                            time.sleep(0.5)
                     work_status.agf_work_mode = "Manual"
                     work_status.mission_status = Mission_Status.Mission_Status_Cancle
                 else:
-                    # if work_status.agf_work_mode == 'Auto':
-                    #     while True:
-                    #         try:
-                    #             url_post_progress = "http://192.168.1.238:9000/progress_mission"
-                    #             progress = {"mission_id":work_status.mission_recv['mission_id'],"mission_status":10}
-                    #             requests.post(url=url_post_progress,json=progress)
-                    #             break
-                    #         except Exception as e:
-                    #             print(e)
-                    #         time.sleep(0.5)
+                    if work_status.agf_work_mode == 'Auto':
+                        while True:
+                            try:
+                                url_post_progress = "http://10.122.79.118:9000/progress_mission"
+                                progress = {"mission_id":work_status.mission_recv['mission_id'],"mission_status":10}
+                                requests.post(url=url_post_progress,json=progress)
+                                break
+                            except Exception as e:
+                                print(e)
+                            time.sleep(0.5)
                     work_status.mission_status = Mission_Status.Mission_Status_Complete
                 if not task_chain.loop:
                     break
@@ -446,8 +447,8 @@ if __name__ == '__main__':
     task_chain_run = Thread(target=task_chain_run_func,args=())
     task_chain_run.start()
 
-    # task_post_status_agf_andon_server = Thread(target=task_post_status_agf_andon_server_func,args=())
-    # task_post_status_agf_andon_server.start()
+    task_post_status_agf_andon_server = Thread(target=task_post_status_agf_andon_server_func,args=())
+    task_post_status_agf_andon_server.start()
 
     task_server = Thread(target=app.run,args=(host:=AGF_Param_Config['host_api'],port:=AGF_Param_Config['port_api']))
     task_server.start()
