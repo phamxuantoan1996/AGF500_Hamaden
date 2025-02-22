@@ -96,27 +96,24 @@ class ESA_API:
     
     def cancel_navigation(self) -> bool:
         result = tranmit.sendAPI(self.apiRobotNavigation,navigation.robot_task_cancel_req,{})
-        if result['ret_code'] != 0:
-            logging.error("Cancel Navigation Fail")
-            return False
-        logging.info("Cancel Navigation Success")
-        return True
+        if result != None:
+            if result['ret_code'] == 0:
+                return True
+        return False
     
     def pause_navigation(self) -> bool:
         result = tranmit.sendAPI(self.apiRobotNavigation,navigation.robot_task_pause_req,{})
-        if result['ret_code'] != 0:
-            logging.error("Pause Navigation Fail")
-            return False
-        logging.info("Pause Navigation Success")
-        return True
+        if result != None:
+            if result['ret_code'] == 0:
+                return True
+        return False
     
     def resume_navigation(self) -> bool:
         result =tranmit.sendAPI(self.apiRobotNavigation,navigation.robot_task_resume_req,{})
-        if result['ret_code'] != 0:
-            logging.error("Resume Navigation Fail")
-            return False
-        logging.info("Resume Navigation Success")
-        return True
+        if result != None:
+            if result['ret_code'] == 0:
+                return True
+        return False
     
     def status(self,key):
         #request location robot

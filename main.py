@@ -76,16 +76,17 @@ def task_agf_poll_status_func():
             work_status.task_list = task_chain.task_list
             work_status.task_current = task_chain.task_current
             list_error = []
-            notices = "AGF đang hoạt động."
+            # notices = "AGF đang hoạt động."
+            notices = " "
             if Robot.data_Status["emergency"]:
                 list_error.append("emergency")
-                notices = "AGF dừng khẩn cấp."
+                notices = notices + " AGF dừng khẩn cấp."
             if Robot.data_Status["blocked"]:
                 list_error.append("blocked")
-                notices = "AGF gặp chướng ngại vật."
+                notices = notices + " AGF gặp chướng ngại vật."
             if mb_client.modbus_error:
                 list_error.append("modbus")
-                notices = "AGF lỗi truyền thông modbus."
+                notices = notices + "AGF lỗi truyền thông modbus."
             work_status.agf_error = list_error
             #audio
             if Robot.data_Status['emergency']:
@@ -95,13 +96,11 @@ def task_agf_poll_status_func():
             elif work_status.task_current != {}:
                 if work_status.task_current['task_name'] == 'pick' and (mb_client.hold_regs[0] != 0):
                     if (work_status.human or mb_client.input_regs[7] != 0):
-                    # if (work_status.human):
                         Robot.play_audio({"name":"human","loop":False})
                     else:
                         Robot.play_audio({"name":"picking_pallet","loop":False})
                 elif work_status.task_current['task_name'] == 'put' and (mb_client.hold_regs[0] != 0):
                     if (work_status.human or mb_client.input_regs[7] != 0):
-                    # if (work_status.human):
                         Robot.play_audio({"name":"human","loop":False})
                     else:
                         Robot.play_audio({"name":"puting_pallet","loop":False})
@@ -116,19 +115,34 @@ def task_agf_poll_status_func():
                 lift_set_led(11)
             else:
                 if work_status.task_current != {}:
-                    # if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human) and (mb_client.hold_regs[0] != 0):
-                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (work_status.human or mb_client.input_regs[7] != 0) and (mb_client.hold_regs[0] != 0):
-                        lift_set_led(8)
-                        notices = "Có vật cản trong vùng AGF lấy/trả pallet."
+                    if (work_status.task_current['task_name'] == 'pick' or work_status.task_current['task_name'] == 'put') and (mb_client.hold_regs[0] != 0):
+                        if work_status.human:
+                            notices = notices + " Có người trong vùng camera."
+                            lift_set_led(8)
+                        elif mb_client.input_regs[7] != 0:
+                            notices = notices + " Có vật cản trong vùng lidar của AGF."
+                            lift_set_led(8)
+                        else:
+                            lift_set_led(2)
                     else:
                         lift_set_led(2)
                 else:
                     lift_set_led(2)
             work_status.notices = notices
-            print('input : ')
-            print(mb_client.input_regs)
-            print('hold : ')
-            print(mb_client.hold_regs)
+
+            if task_chain.task_signal_pause:
+                Robot.pause_navigation()
+                time.sleep(1)
+                task_chain.task_signal_pause = False
+
+            if task_chain.task_signal_resume:
+                Robot.resume_navigation()
+                time.sleep(1)
+                task_chain.task_signal_resume = False
+            # print('input : ')
+            # print(mb_client.input_regs)
+            # print('hold : ')
+            # print(mb_client.hold_regs)
             # print(work_status.agf_sound_audio)
 
         except Exception as e:
@@ -152,6 +166,7 @@ def task_check_human_func():
         "enable":True,
         "thres":2.8
     }
+      
     while True:
         try:
             response = requests.post(url=url_detect_human,json=detect_human)
@@ -211,6 +226,8 @@ def task_chain_run_func():
                     except Exception as e:
                         print(e)
                     time.sleep(0.5)
+
+                time.sleep(50)
             work_status.mission_status = Mission_Status.Mission_Status_Running
             task_chain.task_status = AGF_Task_Status.AGF_Status_Running
             while True:
@@ -421,6 +438,7 @@ def task_chain_run_func():
                     break
             if task_chain.task_signal_cancel:#sau khi huy nhiem vu
                 task_chain.task_signal_cancel = False
+                Robot.cancel_navigation()
             task_chain.task_list = []
             task_chain.task_current = {}
             task_chain.task_status = AGF_Task_Status.AGF_Status_None

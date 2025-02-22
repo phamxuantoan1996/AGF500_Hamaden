@@ -23,7 +23,7 @@ class tranmit:
             headerAPI.send(frame.creat(1,code_api,jsonstring))
             dataall = b''
         except Exception as e:
-            return
+            return None
         try:    
             data = headerAPI.recv(16)
         except socket.timeout:
@@ -51,3 +51,4 @@ class tranmit:
         except socket.timeout:
             print('timeout')
             logging.info(str(headerAPI)+"/t: time out ----------------------------------------------------")
+            return None

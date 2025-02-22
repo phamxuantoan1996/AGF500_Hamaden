@@ -90,9 +90,8 @@ def get_status_amr():
     
 @app.route('/cancel',methods=['PUT','POST'])
 def cancel_mission_agf():
-    if task_chain.task_current != {}:
+    if task_chain.task_list != []:
         task_chain.task_signal_cancel = True
-        Robot.cancel_navigation()
         return jsonify({"result":True,"desc":""}),201
     else:
         return jsonify({"result":False,"desc":""}),400
@@ -115,17 +114,13 @@ def detect_pallet():
 # Route mặc định
 @app.route('/pause',methods=['PUT','POST'])
 def pause_nav():
-    if Robot.pause_navigation():
-        return jsonify({"result":True,"desc":""}),201
-    else:
-        return jsonify({"result":True,"desc":""}),400
+    task_chain.task_signal_pause = True
+    return jsonify({"result":True,"desc":""}),201
 
 @app.route('/resume',methods=['PUT','POST'])
 def resume_nav():
-    if Robot.resume_navigation():
-        return jsonify({"result":True,"desc":""}),201
-    else:
-        return jsonify({"result":True,"desc":""}),400
+    task_chain.task_signal_resume = True
+    return jsonify({"result":True,"desc":""}),201
 
 @app.route('/relocation', methods=["POST"])
 def re_location():
