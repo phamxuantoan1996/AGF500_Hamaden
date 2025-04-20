@@ -47,6 +47,7 @@ class AGF_Work_Status:
         self.__task_index = None
         self.__human = False
         self.__detect_pallet = False
+        self.alarm = {}
 
     
     def get_agf_work_status(self) -> dict:
@@ -67,7 +68,8 @@ class AGF_Work_Status:
             "mission_recv":self.__mission_recv,
             "task_index":self.__task_index,
             "human":self.__human,
-            "detect_pallet":self.__detect_pallet
+            "detect_pallet":self.__detect_pallet,
+            "alarm":self.alarm
         }
         return status
     

@@ -59,9 +59,11 @@ def task_src_poll_status_func():
     while True:
         try:
             Robot.status(Robot.keys)
-            sound = Robot.robot_sound_status()
-            if 'sound_name' in sound.keys():
-                work_status.agf_sound_audio = sound['sound_name']
+            # sound = Robot.robot_sound_status()
+            alarm = Robot.robot_alarm_status()
+            work_status.alarm = alarm
+            # if 'sound_name' in sound.keys():
+            #     work_status.agf_sound_audio = sound['sound_name']
         except Exception as e:
             print(e)
         time.sleep(0.3)
@@ -164,7 +166,7 @@ def task_check_human_func():
     url_detect_human = "http://127.0.0.1:8001/detect_human"
     detect_human = {
         "enable":True,
-        "thres":2.8
+        "thres":2.65
     }
       
     while True:
@@ -202,7 +204,7 @@ def task_check_human_func():
     url_detect_human = "http://127.0.0.1:8001/detect_human"
     detect_human = {
         "enable":False,
-        "thres":2.8
+        "thres":2.65
     }
     while True:
         try:
@@ -226,8 +228,7 @@ def task_chain_run_func():
                     except Exception as e:
                         print(e)
                     time.sleep(0.5)
-
-                time.sleep(50)
+                time.sleep(110)
             work_status.mission_status = Mission_Status.Mission_Status_Running
             task_chain.task_status = AGF_Task_Status.AGF_Status_Running
             while True:
@@ -238,67 +239,54 @@ def task_chain_run_func():
                     if task['task_name'] == 'pick':#1
                         #########Di chuyen den diem detect pallet###########
                         print('AGF di chuyen den diem detect pallet')
+                        while Robot.data_Status["emergency"]:
+                            time.sleep(2)
                         Robot.navigation({'id':task['detect_point']})
-                        time.sleep(5)
+                        time.sleep(4)
                         while True:
                             if Robot.check_target(Robot.data_Status,target=task['detect_point']):
                                 break
                             if task_chain.task_signal_cancel:
                                 Robot.cancel_navigation()
                                 break
+                            try:
+                                if 'warnings' in work_status.alarm.keys() and (not Robot.data_Status["emergency"]):
+                                    warnings = work_status.alarm['warnings']
+                                    for warn in warnings:
+                                        if "54025" in warn.keys():
+                                            Robot.robot_estop_on()
+                                            time.sleep(1)
+                                            Robot.robot_estop_off()
+                                            time.sleep(1)
+                            except Exception as e:
+                                print(e)
                             time.sleep(1)
-                        # detect pallet
-                        # while True:
-                        #     try:
-                        #         url_detect_pallet = "http://127.0.0.1:8002/detect_pallet"
-                        #         detect_pallet = {
-                        #             "enable":True,
-                        #         }
-                        #         response = requests.post(url=url_detect_pallet,json=detect_pallet)
-                        #         if response.status_code != 201:
-                        #             time.sleep(2)
-                        #             continue
-                        #         content = None
-                        #         while True:
-                        #             response = requests.get(url=url_detect_pallet)
-                        #             if response.status_code != 200:
-                        #                 time.sleep(2)
-                        #                 continue
-                        #             content = response.json()
-                        #             break
-                        #         keys = content.keys()
-                        #         if 'enable' in keys and 'result' in keys and 'status' in keys:
-                        #             if content['result']['angle'] != None and content['result']['delta_x'] != None and content['result']['delta_z'] != None and content['result']['area'] != None:
-                        #                 print('angle = ',content['result']['angle'])
-                        #                 print('delta x : ',content['result']['delta_x'])
-                        #                 print('area : ',content['result']['area'])
-                        #                 if (content['result']['angle'] < 1.5) and (content['result']['delta_x'] < 0.02 and content['result']['delta_x'] > -0.02) and (content['result']['area'] >= 0.26 and content['result']['area'] <= 0.30):
-                        #                     work_status.detect_pallet = False
-                        #                     break
-                        #                 # else:
-                        #         work_status.detect_pallet = True
-                        #         while True:
-                        #             if task_chain.task_signal_detect_pallet_resume:
-                        #                 task_chain.task_signal_detect_pallet_resume = False
-                        #                 break
-                        #             time.sleep(2)
-                        #         work_status.detect_pallet = False
-                        #     except Exception as e:
-                        #         print(e)
-                        #     time.sleep(2)
-                        ##############
                         if task_chain.task_signal_cancel:
                             break
                         #########Di chuyen den diem lay hang pallet#########
                         print('AGF di chuyen den diem lay pallet')
+                        while Robot.data_Status["emergency"]:
+                            time.sleep(2)
                         Robot.navigation({'id':task['pick_point']})
-                        time.sleep(5)
+                        time.sleep(4)
                         while True:
                             if Robot.check_target(Robot.data_Status,target=task['pick_point']):
                                 break
                             if task_chain.task_signal_cancel:
                                 Robot.cancel_navigation()
                                 break
+                            
+                            try:
+                                if 'warnings' in work_status.alarm.keys() and (not Robot.data_Status["emergency"]):
+                                    warnings = work_status.alarm['warnings']
+                                    for warn in warnings:
+                                        if "54025" in warn.keys():
+                                            Robot.robot_estop_on()
+                                            time.sleep(1)
+                                            Robot.robot_estop_off()
+                                            time.sleep(1)
+                            except Exception as e:
+                                print(e)
                             time.sleep(1)
                         if task_chain.task_signal_cancel:
                             break
@@ -342,13 +330,27 @@ def task_chain_run_func():
                     elif task['task_name'] == 'put':#2
                         # #AGF di chuyen den diem tra pallet
                         print('AGF di chuyen den diem tra pallet')
+                        while Robot.data_Status["emergency"]:
+                            time.sleep(2)
                         Robot.navigation({'id':task['put_point']})
-                        time.sleep(5)
+                        time.sleep(4)
                         while True:
                             if Robot.check_target(Robot.data_Status,target=task['put_point']):
                                 break
                             if task_chain.task_signal_cancel:
                                 break
+                            
+                            try:
+                                if 'warnings' in work_status.alarm.keys() and (not Robot.data_Status["emergency"]):
+                                    warnings = work_status.alarm['warnings']
+                                    for warn in warnings:
+                                        if "54025" in warn.keys():
+                                            Robot.robot_estop_on()
+                                            time.sleep(1)
+                                            Robot.robot_estop_off()
+                                            time.sleep(1)
+                            except Exception as e:
+                                print(e)
                             time.sleep(1)
                         if task_chain.task_signal_cancel:
                             break
@@ -385,13 +387,27 @@ def task_chain_run_func():
                     #------------------------------------------------------------
                     elif task['task_name'] == 'navigation':
                         print('AMR di chuyen den diem ' + task['target_point'])
+                        while Robot.data_Status["emergency"]:
+                            time.sleep(2)
                         Robot.navigation({'id':task['target_point']})
-                        time.sleep(5)
+                        time.sleep(4)
                         while True:
                             if Robot.check_target(Robot.data_Status,target=task['target_point']):
                                 break
                             if task_chain.task_signal_cancel:
                                 break
+                            
+                            try:
+                                if 'warnings' in work_status.alarm.keys() and (not Robot.data_Status["emergency"]):
+                                    warnings = work_status.alarm['warnings']
+                                    for warn in warnings:
+                                        if "54025" in warn.keys():
+                                            Robot.robot_estop_on()
+                                            time.sleep(1)
+                                            Robot.robot_estop_off()
+                                            time.sleep(1)
+                            except Exception as e:
+                                print(e)
                             time.sleep(1)
                         if task_chain.task_signal_cancel:
                             break

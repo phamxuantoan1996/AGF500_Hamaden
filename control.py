@@ -244,6 +244,23 @@ class ESA_API:
         except Exception as e:
             return None
         
+    def robot_estop_on(self):
+        try:
+            return tranmit.sendAPI(self.apiRobotOther,other.robot_other_softemc_req,{"status":True})
+        except Exception as e:
+            return None
+    
+    def robot_estop_off(self):
+        try:
+            return tranmit.sendAPI(self.apiRobotOther,other.robot_other_softemc_req,{"status":False})
+        except Exception as e:
+            return None
+        
+    def robot_alarm_status(self) -> dict:
+        try:
+            return tranmit.sendAPI(self.apiRobotStatus,status.robot_status_alarm_req,{})
+        except Exception as e:
+            return {}
 
 
 
